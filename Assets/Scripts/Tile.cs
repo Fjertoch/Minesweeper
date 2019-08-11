@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 public class Tile{
     private Action<Tile> cbTileChanged;
@@ -27,7 +28,14 @@ public class Tile{
         set {
             bool oldFlagged = _flagged;
             _flagged = value;
+            
             if(cbTileChanged != null && _flagged != oldFlagged) {
+                if(_flagged) {
+                    mineField.numberOfFlags++;
+                }
+                else {
+                    mineField.numberOfFlags--;
+                }
                 cbTileChanged(this);
             }
         }
@@ -39,6 +47,7 @@ public class Tile{
         }
     }
 
+    // Self-aware tiles
     public MineField mineField;
     public int x {
         get;
@@ -57,21 +66,31 @@ public class Tile{
     }
 
     private void VisitNeighboringSafeTiles() {
+        if(this.numberOfAdjacentBombs > 0 || this.hasBomb) {
+            // There is at least one bomb close to this Tile, so we don't visit any other neighbor, as it could be dangerous! Or we just detonated a bomb!
+            return;
+        }
         Tile[] neighbours = GetNeighbours();
         foreach(Tile t in neighbours) {
-            if(t != null && t.wasVisited == false && t.hasBomb == false && t.isFlagged == false && t.numberOfAdjacentBombs < 1) {
+            if(t != null && t.wasVisited == false && t.hasBomb == false && t.isFlagged == false) {
                 t.wasVisited = true;
             }
         }
     }
 
-    private int CountAdjacentBombs() {
+    private int CountAdjacentBombs( bool debug = false) {
         Tile[] neighbours = GetNeighbours();
         int neighbouringBombCount = 0;
         foreach(Tile t in neighbours) {
+            if(debug) {
+                Debug.Log("Tile " + x + ", " + y + "hasBomb: " + t.hasBomb);
+            }
             if(t != null && t.hasBomb) {
                 neighbouringBombCount++;
             }
+        }
+        if(debug) {
+            Debug.Log("Checked Tile " + x + ", " + y + " has " + neighbouringBombCount + " adjacent bombs");
         }
         return neighbouringBombCount;
     }
@@ -108,4 +127,10 @@ public class Tile{
         cbTileChanged -= callback;
     }
 
+    //-----------------------------------------------------------------------------
+    // DEBUG
+    //-----------------------------------------------------------------------------
+    public void DebugCountBombs() {
+        CountAdjacentBombs(true);
+    }
 }

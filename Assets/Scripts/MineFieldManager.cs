@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
+using TMPro;
 
 public class MineFieldManager : MonoBehaviour{
+    [SerializeField]
+    private TextMeshProUGUI bombsRemainingText;
     [SerializeField]
     private int width = 20;
     [SerializeField]
@@ -8,21 +11,23 @@ public class MineFieldManager : MonoBehaviour{
     [SerializeField]
     private float bombsMultiplier = 0.35f;
 
-    private int numberOfBombs;
-
-    public static MineFieldManager Instance {
-        get;
-        protected set;
-    }
     public MineField field;
 
-    void Start()
-    {
-        if(Instance != null) {
-            Debug.LogError("There is already one MineFieldManager!");
-        }
-        Instance = this;
-        numberOfBombs = Mathf.FloorToInt((20 * 20) * bombsMultiplier);
+    void Start(){
+        int numberOfBombs = Mathf.FloorToInt((width * height) * bombsMultiplier);
+        Debug.Log("Number of bombs is: Floor(" + width + " * " + height + " * " + bombsMultiplier + ") = " + numberOfBombs);
         field = new MineField(width, height, numberOfBombs);
+        field.RegisterTileChanged(OnTileChanged);
+        UpdateRemainingBombsText();
     }
+
+    private void UpdateRemainingBombsText() {
+        int remainingBombs = field.GetRemainingBombsCount();
+        bombsRemainingText.text = "Bombs remaining: " + remainingBombs;
+    }
+
+    public void OnTileChanged(Tile tileData) {
+        UpdateRemainingBombsText();
+    }
+
 }

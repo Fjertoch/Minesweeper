@@ -16,6 +16,12 @@ public class MineField
         get;
         protected set;
     }
+    public int numberOfBombs {
+        get;
+        protected set;
+    }
+
+    public int numberOfFlags = 0;
 
     public MineField(int width, int height, int numberOfBombs) {
         CreateMineField(width, height, numberOfBombs);
@@ -24,15 +30,37 @@ public class MineField
     public void CreateMineField(int width, int height, int numberOfBombs) {
         this.width = width;
         this.height = height;
+        this.numberOfBombs = numberOfBombs;
         tiles = new Tile[width, height];
 
         for(int x = 0; x < width; x++) {
             for(int y = 0; y < height; y++) {
-                bool hasBomb = GetHasBombs(ref numberOfBombs);
-                tiles[x, y] = new Tile(this, x, y, hasBomb);
+                tiles[x, y] = new Tile(this, x, y, false);
                 tiles[x, y].RegisterTileChangedCallback(OnTileChanged);
             }
         }
+        PlaceBombs(numberOfBombs);
+    }
+
+    public void PlaceBombs(int numberOfBombs) {
+        int bombCounter = numberOfBombs;
+        System.Random rand = new System.Random();
+        while(bombCounter > 0) {
+            int randomNumber = Mathf.RoundToInt(UnityEngine.Random.Range(0f, 1.0000001f) * (width * height - 1));
+            int x = randomNumber % width;
+            int y = Mathf.FloorToInt(randomNumber / width);
+            PlaceBombAt(x, y);
+            bombCounter--;
+        }
+    }
+
+    private void PlaceBombAt(Tile t) {
+        t.hasBomb = true;
+    }
+
+    private void PlaceBombAt(int x, int y) {
+        Tile t = tiles[x, y];
+        PlaceBombAt(t);
     }
 
     private bool GetHasBombs(ref int numberOfBombs) {
@@ -49,6 +77,10 @@ public class MineField
         cbTileChanged(t);
     }
 
+    public int GetRemainingBombsCount() {
+        return numberOfBombs - numberOfFlags;
+    }
+
     public Tile GetTileAt(int x, int y) {
         Tile t;
         try {
@@ -58,6 +90,12 @@ public class MineField
             t = null;
         }
         return t;
+    }
+
+    public void MakeAllVisible() {
+        foreach(Tile t in tiles) {
+            t.wasVisited = true;
+        }
     }
 
     public void RegisterTileChanged(Action<Tile> callbackfunc) {

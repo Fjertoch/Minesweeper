@@ -4,25 +4,47 @@ using UnityEngine;
 
 public class MouseManager : MonoBehaviour
 {
+    private MineSweeperManager msm;
+    private MineFieldManager mfm;
+
+    void Start() {
+        msm = FindObjectOfType<MineSweeperManager>();
+        mfm = FindObjectOfType<MineFieldManager>();
+    }
+
     void Update() {
-        if(Input.GetMouseButtonDown(0)) {
-            Vector3 clickPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            int x = Mathf.FloorToInt(clickPosition.x);
-            int y = Mathf.FloorToInt(clickPosition.y);
-            Tile clickedTile = MineFieldManager.Instance.field.GetTileAt(x, y);
-            clickedTile.wasVisited = true;
-        }
-        if(Input.GetMouseButtonDown(1)) {
-            Vector3 clickPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            int x = Mathf.FloorToInt(clickPosition.x);
-            int y = Mathf.FloorToInt(clickPosition.y);
-            Tile clickedTile = MineFieldManager.Instance.field.GetTileAt(x, y);
-            if(clickedTile.wasVisited == false) {
-                clickedTile.isFlagged = !clickedTile.isFlagged;
+        if(msm.gameOver == false) {
+            if(Input.GetMouseButtonDown(0)) {
+                Tile clickedTile = GetTileUnderMouse();
+                clickedTile.wasVisited = true;
+                if(clickedTile.hasBomb) {
+                    msm.GameOver();
+                }
             }
-            else {
-                Debug.Log("Clicked visited Tile");
+            if(Input.GetMouseButtonDown(1)) {
+                Tile clickedTile = GetTileUnderMouse();
+                if(clickedTile.wasVisited == false) {
+                    clickedTile.isFlagged = !clickedTile.isFlagged;
+                }
+            }
+            if(Input.GetMouseButtonDown(2)) {
+                Tile clickedTile = GetTileUnderMouse();
+                clickedTile.DebugCountBombs();
+            }
+            if(Input.GetKeyDown(KeyCode.D)) {
+                mfm.field.MakeAllVisible();
             }
         }
+        else {
+            //Debug.Log("Game Over");
+        }
+    }
+
+    private Tile GetTileUnderMouse() {
+        Vector3 clickPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        int x = Mathf.FloorToInt(clickPosition.x);
+        int y = Mathf.FloorToInt(clickPosition.y);
+        Tile tileUnderMouse = mfm.field.GetTileAt(x, y);
+        return tileUnderMouse;
     }
 }

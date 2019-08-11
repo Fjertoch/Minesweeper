@@ -8,17 +8,19 @@ public class TileSpriteManager : MonoBehaviour
     [SerializeField]
     private GameObject tilePrefab;
 
+    private MineFieldManager mfm;
     private Dictionary<Tile, GameObject> tileGameObjectMap;
     
     void Start(){
+        mfm = FindObjectOfType<MineFieldManager>();
         CreateFieldGameObjects();
     }
 
     void CreateFieldGameObjects() {
-        Tile[,] tiles = MineFieldManager.Instance.field.tiles;
+        Tile[,] tiles = mfm.field.tiles;
         tileGameObjectMap = new Dictionary<Tile, GameObject>();
-        for(int x = 0; x < MineFieldManager.Instance.field.width; x++) {
-            for(int y = 0; y < MineFieldManager.Instance.field.height; y++) {
+        for(int x = 0; x < mfm.field.width; x++) {
+            for(int y = 0; y < mfm.field.height; y++) {
                 Tile tileData = tiles[x, y];
                 GameObject tileGO = Instantiate(tilePrefab, new Vector3(x, y, 0), Quaternion.identity, this.transform);
                 tileGO.name = "Tile_" + x + "_" + y;
@@ -27,7 +29,7 @@ public class TileSpriteManager : MonoBehaviour
                 OnTileChanged(tileData);
             }
         }
-        MineFieldManager.Instance.field.RegisterTileChanged(OnTileChanged);
+        mfm.field.RegisterTileChanged(OnTileChanged);
     }
 
     void OnTileChanged(Tile tileData) {
@@ -47,16 +49,24 @@ public class TileSpriteManager : MonoBehaviour
         GameObject flag = tileGO.transform.Find("Flag").gameObject;
         if(tileData.wasVisited) {
             if(tileData.hasBomb) {
+                bomb.SetActive(true);
                 // Tile shouldn't change its content but to be sure we disable the other gfx
                 tmp.gameObject.SetActive(false);
-                bomb.SetActive(true);
                 flag.SetActive(false);
             }
             else {
-                tmp.text = tileData.numberOfAdjacentBombs.ToString();
+                int bombs = tileData.numberOfAdjacentBombs;
+                tmp.text = bombs.ToString();
+                SpriteRenderer sr = tileGO.transform.Find("Sprite").GetComponent<SpriteRenderer>();
+                sr.color = new Color(0.5f, 0.5f, 0.5f);
+                if(bombs == 0) {
+                    tmp.gameObject.SetActive(false);
+                }
+                else {
+                    tmp.gameObject.SetActive(true);
+                }
                 // Tile shouldn't change its content but to be sure we disable the other gfx
                 bomb.SetActive(false);
-                tmp.gameObject.SetActive(true);
                 flag.SetActive(false);
             }
         }
